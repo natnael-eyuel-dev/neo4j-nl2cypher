@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Database, 
   Table, 
@@ -9,20 +9,22 @@ import {
   ChevronDown, 
   ChevronRight,
   BarChart3,
-  Users,
-  Network
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 
 interface DatabaseSchemaProps {
   database: any;
+  schema: any;
   loading?: boolean;
-  error: string | null;
+  error?: string | null;
+  onRefresh?: () => void;
 }
 
 interface SchemaNode {
   label: string;
   properties: { [key: string]: string };
-  count: number;
+  count?: number;
 }
 
 interface SchemaRelationship {
@@ -30,35 +32,18 @@ interface SchemaRelationship {
   startNode: string;
   endNode: string;
   properties: { [key: string]: string };
-  count: number;
+  count?: number;
 }
 
-export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loading, error }) => {
-  const [schema, setSchema] = useState<any>(null);
+export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ 
+  database, 
+  schema, 
+  loading = false, 
+  error = null,
+  onRefresh 
+}) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [expandedRelationships, setExpandedRelationships] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (error) {
-      console.error('Error fetching schema:', error);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    fetchSchema();
-  }, [database]);
-
-  const fetchSchema = async () => {
-    try {
-      const response = await fetch(`/api/databases/${database.id}/schema`);
-      if (response.ok) {
-        const schemaData = await response.json();
-        setSchema(schemaData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch schema:', error);
-    }
-  };
 
   const toggleNodeExpansion = (nodeLabel: string) => {
     const newExpanded = new Set(expandedNodes);
@@ -84,8 +69,9 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
     const queries = {
       movies: [
         "MATCH (m:Movie) RETURN m LIMIT 10",
-        "MATCH (a:Actor)-[:ACTED_IN]->(m:Movie) RETURN a, m LIMIT 10",
-        "MATCH (g:Genre)<-[:HAS_GENRE]-(m:Movie) RETURN g, count(m) as movieCount ORDER BY movieCount DESC"
+        "MATCH (p:Person)-[:ACTED_IN]->(m:Movie) RETURN p, m LIMIT 10",
+        "MATCH (m:Movie) WHERE m.releaseYear >= 2000 RETURN m LIMIT 10",
+        "MATCH (m:Movie) WHERE m.genres CONTAINS 'Comedy' RETURN m LIMIT 10"
       ],
       social: [
         "MATCH (u:User) RETURN u LIMIT 10",
@@ -98,7 +84,10 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
         "MATCH (p:Project)-[:ASSIGNED_TO]->(e:Employee) RETURN p, e LIMIT 10"
       ]
     };
-    return queries[database.type as keyof typeof queries] || [];
+    return queries[database?.type as keyof typeof queries] || [
+      "MATCH (n) RETURN n LIMIT 10",
+      "MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 10"
+    ];
   };
 
   if (loading) {
@@ -109,12 +98,30 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+        <h3 className="text-lg font-semibold mb-2">Failed to load schema</h3>
+        <p className="text-sm mb-4">{error}</p>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Try Again
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (!schema) {
     return (
       <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         <div className="text-4xl mb-2">📊</div>
-        <p>Unable to load database schema</p>
-        <p className="text-sm">Please try again later</p>
+        <p>No schema data available</p>
+        <p className="text-sm">Schema information could not be loaded</p>
       </div>
     );
   }
@@ -123,16 +130,27 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
     <div className="space-y-6 p-6">
       {/* Database Overview */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <Database className="h-8 w-8 text-primary-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {database.name} Schema
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Database structure and metadata
-            </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <Database className="h-8 w-8 text-primary-600" />
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {database?.name} Schema
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Database structure and metadata
+              </p>
+            </div>
           </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              title="Refresh schema"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -169,127 +187,137 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
       </div>
 
       {/* Node Types */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-2 p-4 border-b border-gray-200 dark:border-gray-700">
-          <Table className="h-5 w-5 text-primary-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Node Types ({schema.nodes?.length || 0})
-          </h3>
-        </div>
-        
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {schema.nodes?.map((node: SchemaNode, index: number) => (
-            <div key={index} className="p-4">
-              <button
-                onClick={() => toggleNodeExpansion(node.label)}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg p-2"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {node.label}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    ({node.count?.toLocaleString()} nodes)
-                  </span>
-                </div>
-                {expandedNodes.has(node.label) ? (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                )}
-              </button>
-              
-              {expandedNodes.has(node.label) && (
-                <div className="mt-3 ml-6 space-y-2">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Properties:
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {Object.entries(node.properties || {}).map(([key, type]) => (
-                      <div key={key} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">{key}</span>
-                        <span className="text-gray-500 dark:text-gray-500 font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                          {type}
-                        </span>
-                      </div>
-                    ))}
+      {schema.nodes && schema.nodes.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2 p-4 border-b border-gray-200 dark:border-gray-700">
+            <Table className="h-5 w-5 text-primary-600" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Node Types ({schema.nodes.length})
+            </h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {schema.nodes.map((node: SchemaNode, index: number) => (
+              <div key={index} className="p-4">
+                <button
+                  onClick={() => toggleNodeExpansion(node.label)}
+                  className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg p-2"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {node.label}
+                    </span>
+                    {node.count !== undefined && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        ({node.count.toLocaleString()} nodes)
+                      </span>
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                  {expandedNodes.has(node.label) ? (
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedNodes.has(node.label) && node.properties && (
+                  <div className="mt-3 ml-6 space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Properties:
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {Object.entries(node.properties).map(([key, type]) => (
+                        <div key={key} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">{key}</span>
+                          <span className="text-gray-500 dark:text-gray-500 font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            {String(type)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Relationship Types */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-2 p-4 border-b border-gray-200 dark:border-gray-700">
-          <Link className="h-5 w-5 text-primary-600" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Relationship Types ({schema.relationships?.length || 0})
-          </h3>
-        </div>
-        
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {schema.relationships?.map((rel: SchemaRelationship, index: number) => (
-            <div key={index} className="p-4">
-              <button
-                onClick={() => toggleRelationshipExpansion(rel.type)}
-                className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg p-2"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {rel.type}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    ({rel.count?.toLocaleString()} relationships)
-                  </span>
-                </div>
-                {expandedRelationships.has(rel.type) ? (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                )}
-              </button>
-              
-              {expandedRelationships.has(rel.type) && (
-                <div className="mt-3 ml-6 space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Connection:
-                      </h4>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">{rel.startNode}</span>
-                        <span className="mx-2">→</span>
-                        <span className="font-medium">{rel.endNode}</span>
+      {schema.relationships && schema.relationships.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2 p-4 border-b border-gray-200 dark:border-gray-700">
+            <Link className="h-5 w-5 text-primary-600" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Relationship Types ({schema.relationships.length})
+            </h3>
+          </div>
+          
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {schema.relationships.map((rel: SchemaRelationship, index: number) => (
+              <div key={index} className="p-4">
+                <button
+                  onClick={() => toggleRelationshipExpansion(rel.type)}
+                  className="flex items-center justify-between w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-lg p-2"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {rel.type}
+                    </span>
+                    {rel.count !== undefined && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        ({rel.count.toLocaleString()} relationships)
+                      </span>
+                    )}
+                  </div>
+                  {expandedRelationships.has(rel.type) ? (
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+                
+                {expandedRelationships.has(rel.type) && (
+                  <div className="mt-3 ml-6 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Connection:
+                        </h4>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">{rel.startNode}</span>
+                          <span className="mx-2">→</span>
+                          <span className="font-medium">{rel.endNode}</span>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Properties:
-                      </h4>
-                      <div className="space-y-1">
-                        {Object.entries(rel.properties || {}).map(([key, type]) => (
-                          <div key={key} className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">{key}</span>
-                            <span className="text-gray-500 dark:text-gray-500 font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                              {type}
-                            </span>
+                      
+                      {rel.properties && Object.keys(rel.properties).length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Properties:
+                          </h4>
+                          <div className="space-y-1">
+                            {Object.entries(rel.properties).map(([key, type]) => (
+                              <div key={key} className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">{key}</span>
+                                <span className="text-gray-500 dark:text-gray-500 font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                                  {String(type)}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Sample Queries */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -310,39 +338,6 @@ export const DatabaseSchema: React.FC<DatabaseSchemaProps> = ({ database, loadin
           ))}
         </div>
       </div>
-
-      {/* Database Statistics */}
-      {schema.statistics && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-2 p-4 border-b border-gray-200 dark:border-gray-700">
-            <BarChart3 className="h-5 w-5 text-primary-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Database Statistics
-            </h3>
-          </div>
-          
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(schema.statistics).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </span>
-                  <span className="text-sm text-gray-900 dark:text-white font-mono">
-                    {value == null
-                      ? '-' // placeholder for null/undefined
-                      : typeof value === 'number'
-                      ? value.toLocaleString()
-                      : typeof value === 'string'
-                      ? value
-                      : JSON.stringify(value)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

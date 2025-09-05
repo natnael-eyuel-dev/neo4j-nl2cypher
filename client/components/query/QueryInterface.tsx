@@ -90,10 +90,6 @@ export const QueryInterface: React.FC<QueryInterfaceProps> = ({ database, user, 
     }
   };
 
-  // Add loading state for schema tab
-  const [schemaLoading, setSchemaLoading] = useState(false);
-  const [schemaError, setSchemaError] = useState<string | null>(null);
-
   // Add function to handle schema viewing
   const handleViewSchema = () => {
     setActiveTab('schema');
@@ -106,6 +102,10 @@ export const QueryInterface: React.FC<QueryInterfaceProps> = ({ database, user, 
     }
   }, [activeTab, database?.id]);
 
+  const [schema, setSchema] = useState<any>(null);
+const [schemaLoading, setSchemaLoading] = useState(false);
+const [schemaError, setSchemaError] = useState<string | null>(null);
+
   const fetchSchema = async () => {
     if (!database?.id) return;
     
@@ -113,10 +113,21 @@ export const QueryInterface: React.FC<QueryInterfaceProps> = ({ database, user, 
     setSchemaError(null);
     
     try {
-      // This would be handled by the DatabaseSchema component internally
-      // We're just showing the pattern here
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/databases/${database.id}/schema`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSchema(data.data);
+      } else {
+        throw new Error('Failed to fetch schema');
+      }
     } catch (error) {
-      setSchemaError('Failed to load database schema');
+      setSchemaError(error instanceof Error ? error.message : 'Failed to load schema');
     } finally {
       setSchemaLoading(false);
     }
@@ -233,10 +244,12 @@ export const QueryInterface: React.FC<QueryInterfaceProps> = ({ database, user, 
         )}
 
         {activeTab === 'schema' && (
-          <DatabaseSchema 
-            database={database} 
+          <DatabaseSchema
+            database={database}
+            schema={schema}
             loading={schemaLoading}
             error={schemaError}
+            onRefresh={fetchSchema}
           />
         )}
 
