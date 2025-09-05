@@ -1,23 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Copy, 
-  Check, 
-  Star, 
-  Share2, 
-  Download, 
-  Eye, 
-  EyeOff,
-  Database,
-  Code,
-  MessageSquare,
-  BarChart3,
-  Network
+  Copy, Check, Star, Share2, Download, Eye, EyeOff, 
+  Database, Code, MessageSquare, BarChart3, Network 
 } from 'lucide-react';
 import { GraphVisualization } from '../results/GraphVisualization';
 import { DataTable } from '../results/DataTable';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface QueryResultsProps {
   results: any;
@@ -62,10 +53,7 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
         })
       });
 
-      if (response.ok) {
-        // Show success message
-        console.log('Saved to favorites');
-      }
+      if (response.ok) console.log('Saved to favorites');
     } catch (error) {
       console.error('Failed to save:', error);
     }
@@ -81,12 +69,8 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
-              Query Error
-            </h3>
-            <p className="text-red-700 dark:text-red-300 mt-1">
-              {results.error}
-            </p>
+            <h3 className="text-lg font-medium text-red-800 dark:text-red-200">Query Error</h3>
+            <p className="text-red-700 dark:text-red-300 mt-1">{results.error}</p>
           </div>
         </div>
       </div>
@@ -95,18 +79,19 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
 
   return (
     <div className="space-y-6">
+
       {/* Query Summary */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Your Query
-            </h3>
-            <p className="text-gray-700 dark:text-gray-300 text-lg">
-              "{results.prompt}"
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Your Query</h3>
+            <div className="prose dark:prose-invert max-w-none text-lg text-gray-700 dark:text-gray-300">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {results.prompt}
+              </ReactMarkdown>
+            </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {user && (
               <button
@@ -142,7 +127,7 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
                 {results.results.nodes?.length || 0}
               </p>
             </div>
-            
+
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <Network className="h-5 w-5 text-green-600" />
@@ -152,7 +137,7 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
                 {results.results.relationships?.length || 0}
               </p>
             </div>
-            
+
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5 text-purple-600" />
@@ -171,11 +156,8 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
             <Code className="h-5 w-5 text-primary-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Generated Cypher Query
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generated Cypher Query</h3>
           </div>
-          
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowCypher(!showCypher)}
@@ -191,7 +173,6 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
             </button>
           </div>
         </div>
-        
         {showCypher && (
           <div className="p-4">
             <pre className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto text-sm text-gray-800 dark:text-gray-200 font-mono">
@@ -201,16 +182,13 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
         )}
       </div>
 
-      {/* Natural Language Explanation */}
+      {/* AI Explanation */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-5 w-5 text-primary-600" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              AI Explanation
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Explanation</h3>
           </div>
-          
           <button
             onClick={() => setShowExplanation(!showExplanation)}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -218,14 +196,11 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
             {showExplanation ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        
         {showExplanation && (
-          <div className="p-4">
-            <div className="prose dark:prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {results.explanation}
-              </p>
-            </div>
+          <div className="p-4 prose dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {results.explanation}
+            </ReactMarkdown>
           </div>
         )}
       </div>
@@ -234,10 +209,7 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
       {results.results && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Results Visualization
-            </h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Results Visualization</h3>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setViewMode('graph')}
@@ -264,13 +236,8 @@ export const QueryResults: React.FC<QueryResultsProps> = ({ results, database, u
               </button>
             </div>
           </div>
-          
           <div className="p-4">
-            {viewMode === 'graph' ? (
-              <GraphVisualization data={results.results} />
-            ) : (
-              <DataTable data={results.results} />
-            )}
+            {viewMode === 'graph' ? <GraphVisualization data={results.results} /> : <DataTable data={results.results} />}
           </div>
         </div>
       )}
