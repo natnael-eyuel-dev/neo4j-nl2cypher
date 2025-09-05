@@ -4,6 +4,7 @@ const csv = require('csv-parser');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { getAllSampleDatabases, getSampleDatabase } = require('../config/database');
 const neo4jService = require('../services/neo4jService');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -161,6 +162,100 @@ router.post('/test-connection', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to test connection'
+    });
+  }
+});
+
+// Save custom database connection to user profile
+router.post('/profile/databases', protect, async (req, res) => {
+  try {
+    const { name, description, uri, username, password } = req.body;
+    
+    if (!name || !uri || !username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name, URI, username, and password are required'
+      });
+    }
+    
+    // Test the connection first
+    const connectionTest = await neo4jService.testConnection(uri, username, password);
+    
+    if (!connectionTest.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Connection test failed: ' + connectionTest.error
+      });
+    }
+    
+    // Add the database to user's profile
+    const newDatabase = {
+      _id: new mongoose.Types.ObjectId(),
+      name,
+      description: description || '',
+      uri,
+      username,
+      password: password, 
+      createdAt: new Date()
+    };
+
+    console.log(newDatabase);
+    
+    // Add to user's custom databases
+    req.user.customDatabases.push(newDatabase);
+    await req.user.save();
+    
+    res.json({
+      success: true,
+      data: {
+        id: newDatabase._id.toString(),
+        ...newDatabase
+      },
+      message: 'Database connection saved successfully'
+    });
+  } catch (error) {
+    console.error('❌ Save database failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save database connection'
+    });
+  }
+});
+
+router.get('/profile/databases', protect, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: req.user.customDatabases || []
+    });
+  } catch (error) {
+    console.error('❌ Get custom databases failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get custom databases'
+    });
+  }
+});
+
+router.delete('/profile/databases/:databaseId', protect, async (req, res) => {
+  try {
+    const { databaseId } = req.params;
+    
+    req.user.customDatabases = req.user.customDatabases.filter(
+      db => db._id.toString() !== databaseId
+    );
+    
+    await req.user.save();
+    
+    res.json({
+      success: true,
+      message: 'Database removed successfully'
+    });
+  } catch (error) {
+    console.error('❌ Remove database failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove database'
     });
   }
 });

@@ -19,10 +19,14 @@ import {
 
 interface DashboardProps {
   onSectionChange: (section: string) => void;
+  onConnectDatabase: () => void; // New prop for connect database
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
-  const { availableDatabases, selectedDatabase } = useDatabase();
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  onSectionChange, 
+  onConnectDatabase 
+}) => {
+  const { availableDatabases, selectedDatabase, refreshDatabases } = useDatabase();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [queryHistoryCount, setQueryHistoryCount] = useState(0);
@@ -36,7 +40,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
     try {
       const token = localStorage.getItem('authToken');
       
-      // Fetch query history count from API (not localStorage)
+      // Refresh databases list
+      await refreshDatabases();
+      
+      // Fetch query history count from API
       if (user && token) {
         try {
           const historyResponse = await fetch('/api/conversations?limit=1', {
@@ -75,6 +82,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
 
   const handleNavigation = (section: string) => {
     onSectionChange(section);
+  };
+
+  const handleConnectDatabase = () => {
+    onConnectDatabase(); 
+  };
+
+  const handleViewDocumentation = () => {
+    window.open('https://neo4j.com/docs/', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleExportData = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/conversations/export/csv', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `query_history_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        throw new Error('Failed to export data');
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data. Please try again.');
+    }
   };
 
   const stats = [
@@ -220,21 +265,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button 
-                onClick={ () => handleNavigation('query-builder') }
+                onClick={() => handleNavigation('query')}
                 className="flex flex-col items-center justify-center p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800 transition-colors cursor-pointer"
               >
                 <Plus className="h-6 w-6 text-blue-600 mb-2" />
-                <span className="text-sm font-medium" onClick={() => handleNavigation('query-builder')}>New Query</span>
+                <span className="text-sm font-medium">New Query</span>
               </button>
               <button 
                 onClick={() => handleNavigation('history')}
                 className="flex flex-col items-center justify-center p-4 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors cursor-pointer"
               >
                 <Clock className="h-6 w-6 text-amber-600 mb-2" />
-                <span className="text-sm font-medium" onClick={() => handleNavigation('history')}>Query History</span>
+                <span className="text-sm font-medium">Query History</span>
               </button>
               <button 
-                onClick={() => handleNavigation('export')}
+                onClick={handleExportData}
                 className="flex flex-col items-center justify-center p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800 transition-colors cursor-pointer"
               >
                 <FileText className="h-6 w-6 text-green-600 mb-2" />
@@ -257,14 +302,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSectionChange }) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <button 
-              onClick={() => window.dispatchEvent(new CustomEvent('navigate-to-connect'))}
+              onClick={handleConnectDatabase}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
             >
               <Plus className="h-4 w-4 mr-2" />
               Connect Database
             </button>
             <button 
-              onClick={() => window.open('/docs', '_blank')}
+              onClick={handleViewDocumentation}
               className="px-4 py-2 border border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg font-medium transition-colors flex items-center justify-center"
             >
               <FileText className="h-4 w-4 mr-2" />

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useDatabase } from '@/contexts/DatabaseContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -50,6 +50,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleNavigation = (section: string) => {
     onSectionChange(section);
     onClose();
+  };
+
+  const [databaseToDelete, setDatabaseToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleRemoveClick = (databaseId: string, databaseName: string) => {
+    setDatabaseToDelete({ id: databaseId, name: databaseName });
+  };
+
+  const confirmDelete = async () => {
+    if (!databaseToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await removeCustomDatabase(databaseToDelete.id);
+      setDatabaseToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete database:', error);
+      alert('Failed to delete database');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDatabaseToDelete(null);
   };
 
   return (
@@ -139,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemoveCustomDatabase(database.id);
+                        handleRemoveClick(database.id, database.name);
                       }}
                       className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                     >
@@ -257,6 +283,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       </div>
+
+      {databaseToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to delete the database "{databaseToDelete.name}"? 
+              This action cannot be undone.
+            </p>
+            <div className="flex space-x-4 justify-end">
+              <button
+                onClick={cancelDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

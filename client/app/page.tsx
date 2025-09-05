@@ -12,17 +12,38 @@ import { Settings } from '@/components/settings/Settings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Profile } from '@/components/profile/Profile';
 import { Favorites } from '@/components/favorites/Favorites';
+import { ConnectDatabaseModal } from '@/components/modals/ConnectDatabaseModal';
 
 export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
-  
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section);
+  };
+
+  const handleConnectDatabase = () => {
+    setIsConnectModalOpen(true);
+  };
+
+  const handleCloseConnectModal = () => {
+    setIsConnectModalOpen(false);
+  };
+
+  const handleDatabaseConnected = (config: any) => {
+    console.log('Database connected:', config);
+    setIsConnectModalOpen(false);
+    // You might want to refresh the databases list here
+    setActiveSection('dashboard');
+  };
+
   // render the appropriate component based on activeSection
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard': 
-        return <Dashboard onSectionChange={setActiveSection} />;
+        return <Dashboard onSectionChange={setActiveSection} onConnectDatabase={handleConnectDatabase} />;
       case 'query-builder':
         return <QueryBuilder />;
       case 'history':
@@ -35,8 +56,11 @@ export default function HomePage() {
         return <Settings />;
       case 'profile':
         return <Profile />;
+      case 'connect-database':
+        // This will now be handled by the modal
+        return <Dashboard onSectionChange={setActiveSection} onConnectDatabase={handleConnectDatabase} />;
       default:
-        return <Dashboard onSectionChange={setActiveSection} />;
+        return <Dashboard onSectionChange={setActiveSection} onConnectDatabase={handleConnectDatabase} />;
     }
   };
 
@@ -72,6 +96,13 @@ export default function HomePage() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Connect Database Modal */}
+      <ConnectDatabaseModal
+        isOpen={isConnectModalOpen}
+        onClose={handleCloseConnectModal}
+        onConnect={handleDatabaseConnected}
+      />
     </div>
   );
 }
