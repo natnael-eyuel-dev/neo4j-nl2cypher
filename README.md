@@ -18,7 +18,7 @@ A platform where users can query graph databases in natural language using LLM i
 - **Backend**: Express.js with Node.js
 - **Database**: Neo4j AuraDB (cloud-hosted)
 - **Storage**: MongoDB for user data and conversation history
-- **LLM Integration**: Gemini/GPT/Claude API
+- **LLM Integration**: Gemini/GPT/Claude/Groq API
 - **LangChain**: Node.js compatible version for query processing
 
 ## 🚀 Quick Start
@@ -28,7 +28,7 @@ A platform where users can query graph databases in natural language using LLM i
 - Node.js 18+ 
 - MongoDB instance
 - Neo4j AuraDB account
-- LLM API key (Gemini, GPT, or Claude)
+- LLM API key (Gemini, GPT, Claude or Groq)
 
 ### Installation
 
@@ -63,13 +63,12 @@ A platform where users can query graph databases in natural language using LLM i
 │   ├── styles/           # CSS and styling
 │   └── utils/            # Frontend utilities
 ├── server/               # Express.js backend
-│   ├── config/           # Configuration files
-│   ├── controllers/      # Route controllers
-│   ├── middleware/       # Express middleware
-│   ├── models/           # Database models
-│   ├── routes/           # API routes
-│   └── services/         # Business logic                  
-└── docs/                 # Documentation
+    ├── config/           # Configuration files
+    ├── controllers/      # Route controllers
+    ├── middleware/       # Express middleware
+    ├── models/           # Database models
+    ├── routes/           # API routes
+    └── services/         # Business logic                  
 ```
 
 ## 🔧 Configuration
@@ -91,7 +90,7 @@ NEO4J_PASSWORD=your-password
 
 # LLM API
 LLM_API_KEY=your-api-key
-LLM_PROVIDER=gemini  # gemini, openai, or anthropic
+LLM_PROVIDER=gemini  # gemini, openai, anthropic or groq
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
