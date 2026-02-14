@@ -237,33 +237,40 @@ export const GraphVisualization: React.FC<GraphVisualizationProps> = ({ data }) 
         {graphData.nodes.length > 0 ? (
           <ForceGraph2D
             graphData={graphData}
-            nodeLabel={(node: GraphNode) => `
-              ${node.name}
-              Type: ${node.type}
-              ${node.properties ? JSON.stringify(node.properties, null, 2) : ''}
-            `}
+            nodeLabel={(node: any) => {
+              const n = node as GraphNode;
+              return `
+              ${n.name}
+              Type: ${n.type}
+              ${n.properties ? JSON.stringify(n.properties, null, 2) : ''}
+            `;
+            }}
             nodeAutoColorBy="type"
-            linkLabel={(link: GraphLink) => `
-              ${link.type}
-              ${link.properties ? JSON.stringify(link.properties, null, 2) : ''}
-            `}
+            linkLabel={(link: any) => {
+              const l = link as GraphLink;
+              return `
+              ${l.type}
+              ${l.properties ? JSON.stringify(l.properties, null, 2) : ''}
+            `;
+            }}
             linkDirectionalParticles={2}
             linkDirectionalParticleSpeed={0.005}
             backgroundColor="rgba(255,255,255,0)"
             width={dimensions.width}
             height={dimensions.height}
-            nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-              const label = node.name || node.id;
+            nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+              const n = node as GraphNode;
+              const label = n.name || n.id;
               const fontSize = 12 / Math.max(1, globalScale);
               ctx.font = `${fontSize}px Sans-Serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillStyle = getNodeColor(node);
+              ctx.fillStyle = getNodeColor(n);
               ctx.beginPath();
-              ctx.arc(node.x!, node.y!, 8, 0, 2 * Math.PI, false);
+              ctx.arc(n.x!, n.y!, 8, 0, 2 * Math.PI, false);
               ctx.fill();
               ctx.fillStyle = '#ffffff';
-              ctx.fillText(label, node.x!, node.y!);
+              ctx.fillText(label, n.x!, n.y!);
             }}
           />
         ) : (
