@@ -14,6 +14,10 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// Vercel runs behind a proxy and sets X-Forwarded-For.
+// Needed for express-rate-limit (and correct client IPs).
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 // On Vercel (same-origin) CORS isn't strictly necessary, but keeping it makes local dev easier
