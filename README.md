@@ -41,8 +41,8 @@ A platform where users can query graph databases in natural language using LLM i
 
 2. **Environment Setup:**
    ```bash
-   cp .env.example .env
-   # Edit .env with your credentials
+   cp client/env.local.example client/.env.local
+   # Edit these files with your credentials
    ```
 
 3. **Start Development:**
@@ -52,7 +52,7 @@ A platform where users can query graph databases in natural language using LLM i
 
 4. **Access the application:**
    - Frontend: http://localhost:3000
-   - Backend: http://localhost:5000
+  - Backend API (same app): http://localhost:3000/api/health
 
 ## 📁 Project Structure
 
@@ -79,6 +79,7 @@ A platform where users can query graph databases in natural language using LLM i
 # Server
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/neo4j-query-system
@@ -95,7 +96,7 @@ LLM_PROVIDER=gemini  # gemini, openai, anthropic or groq
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
 
 # JWT
 JWT_SECRET=your-jwt-secret
@@ -104,8 +105,10 @@ JWT_SECRET=your-jwt-secret
 ## 📚 API Documentation
 
 ### Authentication
-- `POST /auth/google` - Google OAuth login
-- `GET /auth/logout` - Logout user
+- `GET /api/auth/google` - Google OAuth login
+- `GET /api/auth/google/callback` - Google OAuth callback (redirects to `/auth/callback?token=...`)
+- `POST /api/auth/logout` - Logout user
+- `GET /api/auth/verify` - Verify JWT and get user profile
 
 ### Databases
 - `GET /api/databases` - List available databases
@@ -113,7 +116,7 @@ JWT_SECRET=your-jwt-secret
 - `POST /api/databases/upload` - Upload data to create new graph
 
 ### Queries
-- `POST /api/query` - Execute natural language query
+- `POST /api/queries` - Execute natural language query
 - `GET /api/conversations` - Get user conversation history
 - `POST /api/conversations` - Save conversation
 
@@ -124,14 +127,3 @@ JWT_SECRET=your-jwt-secret
 3. Make your changes
 4. Add tests
 5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-For issues and questions:
-- Create an issue in the repository
-- Check the documentation in `/docs`
-- Review the API endpoints
