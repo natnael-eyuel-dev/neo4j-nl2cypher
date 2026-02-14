@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "cd client && npm run build",
+  "installCommand": "cd client && npm ci",
+  "devCommand": "cd client && npm run dev"
+}
+
+

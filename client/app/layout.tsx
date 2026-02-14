@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
@@ -11,8 +11,6 @@ export const metadata: Metadata = {
   description: 'Query graph databases in natural language using LLM integration and interactive visualizations',
   keywords: ['neo4j', 'natural language', 'llm', 'graph database', 'cypher', 'visualization'],
   authors: [{ name: 'Your Name' }],
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#1A73E8',
   manifest: '/manifest.json',
   openGraph: {
     title: 'Neo4j Natural Language Query System',
@@ -25,6 +23,12 @@ export const metadata: Metadata = {
     title: 'Neo4j Natural Language Query System',
     description: 'Query graph databases in natural language using LLM integration',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#1A73E8',
 };
 
 export default function RootLayout({

@@ -1,0 +1,54 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Runtime files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Neo4j related
+/data/
+import/
+plugins/
+conf/
+logs/
+
+# Temporary files
+.tmp/
+*.tmp
+*.bak
+*.orig
+
+# Debug & cache
+.cache/
+.eslintcache
+.nyc_output/
+
+# Next.js build output (fullstack deploy lives under client/)
+client/.next/
+client/out/
+client/.vercel/
+
+# Stray local env typos
+.env.local.exmple

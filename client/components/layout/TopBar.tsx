@@ -188,7 +188,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, user, onSectionChan
             </div>
           ) : (
             <button
-              onClick={() => window.location.href = '/auth/google'}
+              onClick={() => window.location.href = '/api/auth/google'}
               className="btn btn-primary"
             >
               Sign in with Google

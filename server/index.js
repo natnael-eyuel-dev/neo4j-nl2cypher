@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const passport = require('passport');
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/', limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(passport.initialize());
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));

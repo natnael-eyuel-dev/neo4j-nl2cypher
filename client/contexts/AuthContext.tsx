@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('/auth/verify', {
+      const response = await fetch('/api/auth/verify', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -97,14 +97,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async () => checkAuthStatus();
 
   const login = () => {
-    window.location.href = '/auth/google';
+    window.location.href = '/api/auth/google';
   };
 
   const logout = async () => {
     try {
       const token = localStorage.getItem('authToken');
       if (token) {
-        await fetch('/auth/logout', {
+        await fetch('/api/auth/logout', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('No auth token');
 
-      const response = await fetch('/auth/profile/preferences', {
+      const response = await fetch('/api/auth/profile/preferences', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -149,7 +149,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('No auth token');
 
-      const response = await fetch('/auth/profile/databases', {
+      const response = await fetch('/api/auth/profile/databases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error('No auth token');
 
-      const response = await fetch(`/auth/profile/databases/${databaseId}`, {
+      const response = await fetch(`/api/auth/profile/databases/${databaseId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

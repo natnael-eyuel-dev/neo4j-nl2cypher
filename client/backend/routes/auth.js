@@ -6,7 +6,8 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// configure Google OAuth Strategy
+// configure Google OAuth Strategy (guard against double-registering in serverless)
+if (!passport._strategies?.google) {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -38,6 +39,7 @@ passport.use(new GoogleStrategy({
     return done(error, null);
   }
 }));
+}
 
 // serialize user for session
 passport.serializeUser((user, done) => {
@@ -63,13 +65,13 @@ router.get('/google', passport.authenticate('google', {
 // google OAuth callback
 router.get('/google/callback', 
   passport.authenticate('google', { 
-    failureRedirect: '/auth/failure',
+    failureRedirect: '/api/auth/failure',
     session: false 
   }),
   async (req, res) => {
     try {
       if (!req.user) {
-        return res.redirect('/auth/failure');
+        return res.redirect('/api/auth/failure');
       }
       
       // generate JWT token
@@ -81,7 +83,7 @@ router.get('/google/callback',
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('❌ Auth callback failed:', error);
-      res.redirect('/auth/failure');
+      res.redirect('/api/auth/failure');
     }
   }
 );

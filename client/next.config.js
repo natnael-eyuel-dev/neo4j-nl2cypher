@@ -1,24 +1,23 @@
 /** @type {import('next').NextConfig} */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const nextConfig = {
   images: {
     domains: ['lh3.googleusercontent.com'], // For Google OAuth profile pictures
   },
   env: {
-    NEXT_PUBLIC_API_URL: API_URL,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'Neo4j Natural Language Query System',
   },
   async rewrites() {
+    // If you deploy backend separately, set NEXT_PUBLIC_API_URL and we proxy to it.
+    // If unset (recommended for "fullstack on Vercel"), we serve the API via Next.js pages/api.
+    if (!API_URL) return [];
+
     return [
       {
         source: '/api/:path*',
-        destination: `${API_URL}/api/:path*`, // use top-level variable
-      },
-      {
-        source: '/auth/:path*',
-        destination: `${API_URL}/auth/:path*`,
+        destination: `${API_URL}/api/:path*`,
       },
     ];
   },
