@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -17,6 +17,7 @@ import {
 export const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
+  const [activeSection, setActiveSection] = useState<'appearance' | 'account' | 'databases'>('appearance');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -65,6 +66,12 @@ export const Settings: React.FC = () => {
       await updatePreferences(newTheme);
     }
   };
+
+  const goToSection = useCallback((section: 'appearance' | 'account' | 'databases') => {
+    setActiveSection(section);
+    const el = document.getElementById(`settings-${section}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -118,14 +125,46 @@ export const Settings: React.FC = () => {
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
             <nav className="space-y-2">
-              <div className="px-4 py-2 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded-md font-medium">
-                <User className="h-4 w-4 inline mr-2" />
+              <button
+                type="button"
+                onClick={() => goToSection('appearance')}
+                className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                  activeSection === 'appearance'
+                    ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/40'
+                }`}
+              >
+                <Sun className="h-4 w-4 inline mr-2" />
                 Appearance
-              </div>
-              <div className="px-4 py-2 text-gray-700 dark:text-gray-300 rounded-md">
-                <Database className="h-4 w-4 inline mr-2" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => goToSection('account')}
+                className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                  activeSection === 'account'
+                    ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/40'
+                }`}
+              >
+                <User className="h-4 w-4 inline mr-2" />
                 Account
-              </div>
+              </button>
+
+              {user?.customDatabases && user.customDatabases.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => goToSection('databases')}
+                  className={`w-full text-left px-4 py-2 rounded-md font-medium transition-colors ${
+                    activeSection === 'databases'
+                      ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/40'
+                  }`}
+                >
+                  <Database className="h-4 w-4 inline mr-2" />
+                  Databases
+                </button>
+              )}
             </nav>
           </div>
         </div>
@@ -133,7 +172,7 @@ export const Settings: React.FC = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Theme Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div id="settings-appearance" className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 scroll-mt-24">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Appearance
             </h2>
@@ -167,7 +206,7 @@ export const Settings: React.FC = () => {
           </div>
 
           {/* Account Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div id="settings-account" className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 scroll-mt-24">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Account
             </h2>
@@ -201,7 +240,7 @@ export const Settings: React.FC = () => {
 
           {/* Database Settings - Only show if user has custom databases */}
           {user?.customDatabases && user.customDatabases.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div id="settings-databases" className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 scroll-mt-24">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Your Databases
               </h2>

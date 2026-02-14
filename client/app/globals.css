@@ -191,25 +191,6 @@
   }
 }
 
-/* dark mode overrides */
-@media (prefers-color-scheme: dark) {
-  .dark\:bg-gray-900 {
-    background-color: rgb(17 24 39);
-  }
-  
-  .dark\:text-gray-100 {
-    color: rgb(243 244 246);
-  }
-  
-  .dark\:border-gray-700 {
-    border-color: rgb(55 65 81);
-  }
-  
-  .dark\:bg-gray-800 {
-    background-color: rgb(31 41 55);
-  }
-}
-
 /* print styles */
 @media print {
   .no-print {
