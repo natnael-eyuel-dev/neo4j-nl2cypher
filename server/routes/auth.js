@@ -3,9 +3,6 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { protect, generateToken } = require('../middleware/auth');
 const User = require('../models/User');
-const config = require('dotenv')
-
-config.config({path:__dirname + '/../../.env.local'});
 
 const router = express.Router();
 
@@ -59,7 +56,8 @@ passport.deserializeUser(async (id, done) => {
 
 // google OAuth login
 router.get('/google', passport.authenticate('google', { 
-  scope: ['profile', 'email'] 
+  scope: ['profile', 'email'],
+  session: false
 }));
 
 // google OAuth callback
@@ -78,7 +76,8 @@ router.get('/google/callback',
       const token = generateToken(req.user._id);
       
       // redirect to frontend with token
-      const redirectUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/callback?token=${token}`;
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectUrl = `${frontendUrl}/auth/callback?token=${token}`;
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('❌ Auth callback failed:', error);
