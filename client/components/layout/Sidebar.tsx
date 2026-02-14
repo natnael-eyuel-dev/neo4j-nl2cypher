@@ -273,7 +273,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Sign in to save your queries
                 </p>
                 <button
-                  onClick={() => window.location.href = '/auth/google'}
+                  onClick={() => window.location.href = '/api/auth/google'}
                   className="btn btn-primary w-full"
                 >
                   Sign in with Google
