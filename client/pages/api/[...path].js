@@ -10,7 +10,7 @@ async function ensureMongo() {
   await mongoConnPromise;
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     await ensureMongo();
     return app(req, res);
@@ -19,9 +19,9 @@ module.exports = async function handler(req, res) {
     console.error('API handler failed:', err);
     res.status(500).json({ success: false, error: 'Server initialization failed' });
   }
-};
+}
 
-module.exports.config = {
+export const config = {
   api: {
     bodyParser: false,
     externalResolver: true,
